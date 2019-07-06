@@ -109,7 +109,9 @@ public class MediaPlayerActivity extends AppCompatActivity {
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                tv_start.setText(calculateTime(player.getCurrentPosition() / 1000));
+                if (player != null) {
+                    tv_start.setText(calculateTime(player.getCurrentPosition() / 1000));
+                }
                 tv_end.setText(calculateTime(duration / 1000));
             }
 
