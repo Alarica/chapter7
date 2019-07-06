@@ -27,10 +27,11 @@ public class MediaPlayerActivity extends AppCompatActivity {
     private SeekBar seekBar;
     private Timer timer;
     private boolean seekBarIsChaging;
+    private int position;
 
     @RequiresApi(api = Build.VERSION_CODES.N)
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
+    protected void onCreate(@Nullable final Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setTitle("MediaPlayer");
 
@@ -50,9 +51,12 @@ public class MediaPlayerActivity extends AppCompatActivity {
             tv_end.setText(calculateTime(player.getDuration() / 1000));
 
             player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @RequiresApi(api = Build.VERSION_CODES.O)
                 @Override
                 public void onPrepared(MediaPlayer mp) {
                     // 自动播放
+                    player.seekTo(position, MediaPlayer.SEEK_CLOSEST);
+                    Log.d(TAG, "onPrepared: AAAAAAAAA" + position);
                     player.start();
                     player.setLooping(true);
                     timer = new Timer();
@@ -60,11 +64,7 @@ public class MediaPlayerActivity extends AppCompatActivity {
                         @Override
                         public void run() {
                             if (!seekBarIsChaging) {
-                                if (player != null) {
-                                    if (player.isPlaying()) {
-                                        seekBar.setProgress(player.getCurrentPosition());
-                                    }
-                                }
+                                seekBar.setProgress(player.getCurrentPosition());
                             }
                         }
                     }, 0, 1000);
@@ -126,10 +126,11 @@ public class MediaPlayerActivity extends AppCompatActivity {
              * 首先获取拖拽进度
              * 将进度对应设置给MediaPlayer
              * */
+            @RequiresApi(api = Build.VERSION_CODES.O)
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 seekBarIsChaging = false;
-                player.seekTo(seekBar.getProgress());//在当前位置播放
+                player.seekTo(seekBar.getProgress(), MediaPlayer.SEEK_CLOSEST);//在当前位置播放
                 tv_start.setText(calculateTime(player.getCurrentPosition() / 1000));
             }
         });
@@ -172,8 +173,11 @@ public class MediaPlayerActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
         if (player != null) {
+            position = player.getCurrentPosition();
             player.stop();
+            player.reset();
             player.release();
+            player = null;
         }
         if (timer != null) {
             timer.cancel();
@@ -203,12 +207,30 @@ public class MediaPlayerActivity extends AppCompatActivity {
         if (timer != null) {
             timer.cancel();
         }
+        if (player != null) {
+            position = player.getCurrentPosition();
+            player.stop();
+            player.reset();
+            player.release();
+            player = null;
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        outState.putInt("position", player.getCurrentPosition());
-        Log.d(TAG, "onSaveInstanceState: " + player.getCurrentPosition());
+        outState.putInt("position", position);
+        Log.d(TAG, "onSaveInstanceState: AAAAAAAAAAAAA" + position);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        if (savedInstanceState != null) {
+            position = savedInstanceState.getInt("position");
+        } else {
+            position = 0;
+        }
+        Log.d(TAG, "onRestoreInstanceState:  AAAAAAAAAAAAAA " + position);
     }
 }
